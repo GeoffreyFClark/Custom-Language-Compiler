@@ -65,11 +65,39 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match("[A-Za-z_]")) {
+            throw new ParseException("Expected identifier start.", chars.index);
+        }
+        while (match("[A-Za-z0-9_-]")) {
+            // consume
+        }
+        return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
-        throw new UnsupportedOperationException(); //TODO
+        //TODO optional sign (doublecheck later)
+        match("[+-]");
+
+        if (match("0")) {
+            if (peek("\\.", "[0-9]")) {
+                match("\\.", "[0-9]");
+                while (match("[0-9]")) {}
+                return chars.emit(Token.Type.DECIMAL);
+            } else {
+                return chars.emit(Token.Type.INTEGER);
+            }
+        } else if (match("[1-9]")) {
+            while (match("[0-9]")) {}
+            if (peek("\\.", "[0-9]")) {
+                match("\\.", "[0-9]");
+                while (match("[0-9]")) {}
+                return chars.emit(Token.Type.DECIMAL);
+            } else {
+                return chars.emit(Token.Type.INTEGER);
+            }
+        } else {
+            throw new ParseException("Invalid number.", chars.index);
+        }
     }
 
     public Token lexCharacter() {
