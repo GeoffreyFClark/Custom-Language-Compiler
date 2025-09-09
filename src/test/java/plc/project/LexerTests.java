@@ -129,6 +129,83 @@ public class LexerTests {
         );
     }
 
+    // From LexerTestCaseFoo.java provided in Module 4
+    @ParameterizedTest
+    @MethodSource
+    void LexerTestCaseFoo(String test, String input, List<Token> expected) {
+        test(input, expected, true);
+    }
+
+    private static Stream<Arguments> LexerTestCaseFoo() {
+        return Stream.of(
+                Arguments.of("Foo Case",
+                        "LET i = -1;\nLET inc = 2;\nDEF foo() DO\n    WHILE i <= 1 DO\n        IF i > 0 DO\n            print(\"bar\");\n        END\n        i = i + inc;\n    END\nEND",
+                        // pasted directly from original file
+                        Arrays.asList(
+
+                                //LET i = -1;
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "i", 4),
+                                new Token(Token.Type.OPERATOR, "=", 6),
+                                new Token(Token.Type.INTEGER, "-1", 8),
+                                new Token(Token.Type.OPERATOR, ";", 10),
+
+                                //LET inc = 2;
+                                new Token(Token.Type.IDENTIFIER, "LET", 12),
+                                new Token(Token.Type.IDENTIFIER, "inc", 16),
+                                new Token(Token.Type.OPERATOR, "=", 20),
+                                new Token(Token.Type.INTEGER, "2", 22),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+
+                                //DEF foo() DO
+                                new Token(Token.Type.IDENTIFIER, "DEF", 25),
+                                new Token(Token.Type.IDENTIFIER, "foo", 29),
+                                new Token(Token.Type.OPERATOR, "(", 32),
+                                new Token(Token.Type.OPERATOR, ")", 33),
+                                new Token(Token.Type.IDENTIFIER, "DO", 35),
+
+                                //    WHILE i <= 1 DO
+                                new Token(Token.Type.IDENTIFIER, "WHILE", 42),
+                                new Token(Token.Type.IDENTIFIER, "i", 48),
+                                new Token(Token.Type.OPERATOR, "<=", 50),
+                                new Token(Token.Type.INTEGER, "1", 53),
+                                new Token(Token.Type.IDENTIFIER, "DO", 55),
+
+                                //        IF i > 0 DO
+                                new Token(Token.Type.IDENTIFIER, "IF", 66),
+                                new Token(Token.Type.IDENTIFIER, "i", 69),
+                                new Token(Token.Type.OPERATOR, ">", 71),
+                                new Token(Token.Type.INTEGER, "0", 73),
+                                new Token(Token.Type.IDENTIFIER, "DO", 75),
+
+                                //            print(\"bar\");
+                                new Token(Token.Type.IDENTIFIER, "print", 90),
+                                new Token(Token.Type.OPERATOR, "(", 95),
+                                new Token(Token.Type.STRING, "\"bar\"", 96),
+                                new Token(Token.Type.OPERATOR, ")", 101),
+                                new Token(Token.Type.OPERATOR, ";", 102),
+
+                                //        END
+                                new Token(Token.Type.IDENTIFIER, "END", 112),
+
+                                //        i = i + inc;
+                                new Token(Token.Type.IDENTIFIER, "i",124),
+                                new Token(Token.Type.OPERATOR, "=", 126),
+                                new Token(Token.Type.IDENTIFIER, "i", 128),
+                                new Token(Token.Type.OPERATOR, "+", 130),
+                                new Token(Token.Type.IDENTIFIER, "inc", 132),
+                                new Token(Token.Type.OPERATOR, ";", 135),
+
+                                //    END
+                                new Token(Token.Type.IDENTIFIER, "END", 141),
+
+                                //END
+                                new Token(Token.Type.IDENTIFIER, "END", 145)
+                        )
+                )
+        );
+    }
+
     @Test
     void testException() {
         ParseException exception = Assertions.assertThrows(ParseException.class,

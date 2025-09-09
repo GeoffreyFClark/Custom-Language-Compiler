@@ -28,7 +28,18 @@ public final class Lexer {
      * whitespace where appropriate.
      */
     public List<Token> lex() {
-        throw new UnsupportedOperationException(); //TODO
+        List<Token> tokens = new java.util.ArrayList<>();
+        while (chars.has(0)) {
+            while (match("[ \\t\\r\\n]")) {
+                chars.skip();
+            }
+            if (!chars.has(0)) {
+                break;
+            }
+            chars.skip();
+            tokens.add(lexToken());
+        }
+        return tokens;
     }
 
     /**
@@ -40,7 +51,17 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        throw new UnsupportedOperationException(); //TODO
+        if (peek("[A-Za-z_]")) {
+            return lexIdentifier();
+        } else if (peek("[+-]", "[0-9]") || peek("[0-9]")) {
+            return lexNumber();
+        } else if (peek("'")) {
+            return lexCharacter();
+        } else if (peek("\"")) {
+            return lexString();
+        } else {
+            return lexOperator();
+        }
     }
 
     public Token lexIdentifier() {

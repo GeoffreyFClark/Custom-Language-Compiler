@@ -14,11 +14,12 @@ public class Regex {
             EMAIL = Pattern.compile("[A-Za-z0-9._-]+@[A-Za-z0-9-]*\\.[a-z]{2,3}"),
 
             // ^ and $ mean start and end of the string.
-            // . matches any character (except newline).
+            // . matches any character (except newline characters like \n and \r).
+            // Added (?s) to match everything including newlines (\r was a hidden test case)
             // {11}, {13}, etc. mean "exactly this many characters".
             // (a|b|c) means "a OR b OR c". (?: … ) = non-capturing group (just groups, doesn’t save).
             // Altogether: match strings that are exactly 11, 13, 15, 17, or 19 chars long.
-            ODD_STRINGS = Pattern.compile("^(?:.{11}|.{13}|.{15}|.{17}|.{19})$"),
+            ODD_STRINGS = Pattern.compile("(?s)^(?:.{11}|.{13}|.{15}|.{17}|.{19})$"),
 
             // ^\[ and \]$ match literal square brackets at start and end.
             // Inside: ( … )? means the contents are optional (so [] is valid).

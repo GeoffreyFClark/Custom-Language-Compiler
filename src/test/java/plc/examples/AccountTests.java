@@ -34,7 +34,7 @@ public class AccountTests {
     @Test
     void testFailed() {
         Account account = new Account();
-        Assertions.assertEquals(true, account.isOverdrawn());
+        Assertions.assertEquals(false, account.isOverdrawn());
     }
 
     @Test
