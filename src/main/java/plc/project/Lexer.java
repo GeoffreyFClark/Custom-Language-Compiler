@@ -150,7 +150,19 @@ public final class Lexer {
     }
 
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO
+        if (peek("[<>!=]", "=")) {
+            match("[<>!=]", "=");
+            return chars.emit(Token.Type.OPERATOR);
+        }
+        if (!chars.has(0)) {
+            throw new ParseException("Expected operator.", chars.index);
+        }
+        char c = chars.get(0);
+        if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\b') {
+            throw new ParseException("Expected operator.", chars.index);
+        }
+        chars.advance();
+        return chars.emit(Token.Type.OPERATOR);
     }
 
     /**
