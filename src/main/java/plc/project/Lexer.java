@@ -101,15 +101,52 @@ public final class Lexer {
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match("'")) {
+            throw new ParseException("Expected opening single quote for character.", chars.index);
+        }
+        if (!chars.has(0) || peek("[\\n\\r]")) {
+            throw new ParseException("Unterminated or invalid character literal.", chars.index);
+        }
+        if (match("\\\\")) {
+            lexEscape();
+        } else {
+            if (peek("'")) {
+                throw new ParseException("Empty character literal.", chars.index);
+            }
+            chars.advance();
+        }
+        if (!match("'")) {
+            throw new ParseException("Unterminated character literal.", chars.index);
+        }
+        return chars.emit(Token.Type.CHARACTER);
     }
 
     public Token lexString() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match("\"")) {
+            throw new ParseException("Expected opening quote for string.", chars.index);
+        }
+        while (chars.has(0)) {
+            if (peek("\"")) {
+                match("\"");
+                return chars.emit(Token.Type.STRING);
+            } else if (peek("[\\n\\r]")) {
+                throw new ParseException("String literal cannot span lines.", chars.index);
+            } else if (match("\\\\")) {
+                lexEscape();
+            } else {
+                chars.advance();
+            }
+        }
+        throw new ParseException("Unterminated string literal.", chars.index);
     }
 
     public void lexEscape() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!chars.has(0)) {
+            throw new ParseException("Unterminated escape sequence.", chars.index);
+        }
+        if (!match("[bnrt'\"\\\\]")) {
+            throw new ParseException("Invalid escape sequence.", chars.index);
+        }
     }
 
     public Token lexOperator() {
