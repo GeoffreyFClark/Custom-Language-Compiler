@@ -1,6 +1,7 @@
 package plc.project;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The lexer works through three main functions:
@@ -28,9 +29,9 @@ public final class Lexer {
      * whitespace where appropriate.
      */
     public List<Token> lex() {
-        List<Token> tokens = new java.util.ArrayList<>();
+        List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            while (match("[ \\t\\r\\n]")) {
+            while (match("[ \\t\\r\\n]")) {  // TODO: Inclusion of \\b throws exception
                 chars.skip();
             }
             if (!chars.has(0)) {
@@ -53,7 +54,13 @@ public final class Lexer {
     public Token lexToken() {
         if (peek("[A-Za-z_]")) {
             return lexIdentifier();
-        } else if (peek("[+-]", "[0-9]") || peek("[0-9]")) {
+        } else if (
+            // signed non-zero int, i.e. -1, +2, etc
+                peek("[+-]", "[1-9]") ||
+                        // signed zero-decimal, i.e. -0.5, +0.5, etc
+                        peek("[+-]", "0", "\\.", "[0-9]") ||
+                        peek("[0-9]")
+        ) {
             return lexNumber();
         } else if (peek("'")) {
             return lexCharacter();
@@ -75,8 +82,10 @@ public final class Lexer {
     }
 
     public Token lexNumber() {
-        //TODO optional sign (doublecheck later)
-        match("[+-]");
+        // Only consume sign if it actually begins a valid number
+        if (peek("[+-]", "[1-9]") || peek("[+-]", "0", "\\.", "[0-9]")) {
+            match("[+-]");
+        }
 
         if (match("0")) {
             if (peek("\\.", "[0-9]")) {
@@ -157,8 +166,7 @@ public final class Lexer {
         if (!chars.has(0)) {
             throw new ParseException("Expected operator.", chars.index);
         }
-        char c = chars.get(0);
-        if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\b') {
+        if (peek("[ \\t\\r\\n]")) {  // TODO: Inclusion of \\b throws exception
             throw new ParseException("Expected operator.", chars.index);
         }
         chars.advance();
