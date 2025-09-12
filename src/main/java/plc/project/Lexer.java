@@ -24,6 +24,11 @@ public final class Lexer {
         chars = new CharStream(input);
     }
 
+    // Workaround: Direct whitespace char check since peek/match of \\b throws exception
+    private static boolean isWhitespaceChar(char c) {
+        return c == ' ' || c == '\b' || c == '\n' || c == '\r' || c == '\t';
+    }
+
     /**
      * Repeatedly lexes the input using {@link #lexToken()}, also skipping over
      * whitespace where appropriate.
@@ -31,7 +36,9 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            while (match("[ \\t\\r\\n]")) {  // TODO: Inclusion of \\b throws exception
+            //while (match("[ \\t\\r\\n]")) {  // match \\b throws exception
+            while (chars.has(0) && isWhitespaceChar(chars.get(0))) {
+                chars.advance();
                 chars.skip();
             }
             if (!chars.has(0)) {
@@ -166,7 +173,8 @@ public final class Lexer {
         if (!chars.has(0)) {
             throw new ParseException("Expected operator.", chars.index);
         }
-        if (peek("[ \\t\\r\\n]")) {  // TODO: Inclusion of \\b throws exception
+        //if (peek("[ \\t\\r\\n]")) {  // peek \\b throws exception
+        if (isWhitespaceChar(chars.get(0))) {
             throw new ParseException("Expected operator.", chars.index);
         }
         chars.advance();

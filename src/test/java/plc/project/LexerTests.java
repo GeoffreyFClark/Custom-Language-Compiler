@@ -132,6 +132,33 @@ public class LexerTests {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource
+    void testBackspaceWhitespace(String test, String input, List<Token> expected) {
+        test(input, expected, true);
+    }
+
+    private static Stream<Arguments> testBackspaceWhitespace() {
+        return Stream.of(
+                Arguments.of("Backspace between identifiers",
+                        "one\b two",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "one", 0),
+                                // \b at index 3 and ' ' at 4 are skipped; 't' starts at 5
+                                new Token(Token.Type.IDENTIFIER, "two", 5)
+                        )
+                ),
+                Arguments.of("Backspace between integers",
+                        "1\b2",
+                        Arrays.asList(
+                                new Token(Token.Type.INTEGER, "1", 0),
+                                // \b at index 1 is skipped; '2' starts at 2
+                                new Token(Token.Type.INTEGER, "2", 2)
+                        )
+                )
+        );
+    }
+
     // From LexerTestCaseFoo.java provided in Module 4
     @ParameterizedTest
     @MethodSource
