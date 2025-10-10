@@ -40,6 +40,9 @@ public final class Parser {
         while (peek("DEF")) {
             methods.add(parseMethod());
         }
+        if (tokens.has(0)) {
+            throw new ParseException("Unexpected token.", tokens.get(0).getIndex());
+        }
         return new Ast.Source(fields, methods);
     }
 
