@@ -384,16 +384,19 @@ public final class Parser {
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
         // logical_expression ::= comparison_expression (('AND' | 'OR') comparison_expression)*
-        // accept && and || too
         Ast.Expression expr = parseEqualityExpression();
         while (true) {
             String op = null;
             if (peek("AND")) { op = "AND"; }
             else if (peek("OR")) { op = "OR"; }
-            else if (peek("&&")) { op = "&&"; }
-            else if (peek("||")) { op = "||"; }
             if (op == null) break;
             tokens.advance(); // consume operator
+
+            // need right-hand side of expression after operator
+            if (!tokens.has(0)) {
+                throw new ParseException("Expected expression.", eofIndex());
+            }
+
             Ast.Expression right = parseEqualityExpression();
             expr = new Ast.Expression.Binary(op, expr, right);
         }
