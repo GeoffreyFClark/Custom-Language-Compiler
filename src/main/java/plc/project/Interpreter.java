@@ -1,5 +1,8 @@
 package plc.project;
 
+import java.math.BigInteger;
+import java.math.BigDecimal;
+
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     private Scope scope = new Scope(null);
@@ -81,7 +84,21 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (!ast.getOperator().equals("+")) {
+            throw new RuntimeException("Unknown operator: " + ast.getOperator());
+        }
+        Environment.PlcObject lObj = visit(ast.getLeft());
+        Environment.PlcObject rObj = visit(ast.getRight());
+        Object L = lObj.getValue();
+        Object R = rObj.getValue();
+
+        if (L instanceof BigInteger && R instanceof BigInteger) {
+            return Environment.create(((BigInteger) L).add((BigInteger) R));
+        } else if (L instanceof BigDecimal && R instanceof BigDecimal) {
+            return Environment.create(((BigDecimal) L).add((BigDecimal) R));
+        } else {
+            throw new RuntimeException("Invalid + operands.");
+        }
     }
 
     @Override
