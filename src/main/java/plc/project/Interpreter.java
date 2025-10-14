@@ -2,6 +2,8 @@ package plc.project;
 
 import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
@@ -103,12 +105,27 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver().isPresent()) {
+            Environment.PlcObject obj = visit(ast.getReceiver().get());
+            return obj.getField(ast.getName()).getValue();
+        } else {
+            return scope.lookupVariable(ast.getName()).getValue();
+        }
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        List<Environment.PlcObject> args = new ArrayList<>();
+        for (Ast.Expression e : ast.getArguments()) {
+            args.add(visit(e));
+        }
+        if (ast.getReceiver().isPresent()) {
+            Environment.PlcObject obj = visit(ast.getReceiver().get());
+            return obj.callMethod(ast.getName(), args);
+        } else {
+            Environment.Function f = scope.lookupFunction(ast.getName(), args.size());
+            return f.invoke(args);
+        }
     }
 
     /**
