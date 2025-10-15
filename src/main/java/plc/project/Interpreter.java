@@ -70,7 +70,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (!(ast.getReceiver() instanceof Ast.Expression.Access)) {
+            throw new RuntimeException("Receiver is not assignable.");
+        }
+        Ast.Expression.Access acc = (Ast.Expression.Access) ast.getReceiver();
+        Environment.PlcObject v = visit(ast.getValue());
+
+        if (acc.getReceiver().isPresent()) {
+            Environment.PlcObject obj = visit(acc.getReceiver().get());
+            obj.setField(acc.getName(), v);
+        } else {
+            Environment.Variable var = scope.lookupVariable(acc.getName());
+            var.setValue(v);
+        }
+        return Environment.NIL;
     }
 
     @Override
