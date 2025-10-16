@@ -114,7 +114,18 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Scope old = scope;
+        scope = new Scope(old);
+        try {
+            while (requireType(Boolean.class, visit(ast.getCondition()))) {
+                for (Ast.Statement s : ast.getStatements()) {
+                    visit(s);
+                }
+            }
+        } finally {
+            scope = old;
+        }
+        return Environment.NIL;
     }
 
     @Override
