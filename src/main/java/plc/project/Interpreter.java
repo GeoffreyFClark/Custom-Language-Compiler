@@ -184,9 +184,26 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
-        if (!ast.getOperator().equals("+")) {
-            throw new RuntimeException("Unknown operator: " + ast.getOperator());
+        String op = ast.getOperator();
+
+        if (op.equals("AND")) {
+            Boolean left = requireType(Boolean.class, visit(ast.getLeft()));
+            if (!left) return Environment.create(false);
+            Boolean right = requireType(Boolean.class, visit(ast.getRight()));
+            return Environment.create(left && right);
         }
+
+        if (op.equals("OR")) {
+            Boolean left = requireType(Boolean.class, visit(ast.getLeft()));
+            if (left) return Environment.create(true);
+            Boolean right = requireType(Boolean.class, visit(ast.getRight()));
+            return Environment.create(left || right);
+        }
+
+        if (!op.equals("+")) {
+            throw new RuntimeException("Unknown operator: " + op);
+        }
+
         Environment.PlcObject lObj = visit(ast.getLeft());
         Environment.PlcObject rObj = visit(ast.getRight());
         Object L = lObj.getValue();
