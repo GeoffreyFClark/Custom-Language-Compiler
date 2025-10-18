@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
@@ -200,14 +201,37 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             return Environment.create(left || right);
         }
 
-        if (!op.equals("+")) {
-            throw new RuntimeException("Unknown operator: " + op);
-        }
-
         Environment.PlcObject lObj = visit(ast.getLeft());
         Environment.PlcObject rObj = visit(ast.getRight());
         Object L = lObj.getValue();
         Object R = rObj.getValue();
+
+        if (op.equals("==")) {
+            return Environment.create(Objects.equals(L, R));
+        }
+        if (op.equals("!=")) {
+            return Environment.create(!Objects.equals(L, R));
+        }
+
+        if (op.equals("<") || op.equals("<=") || op.equals(">") || op.equals(">=")) {
+            if (!(L instanceof Comparable) || L.getClass() != R.getClass()) {
+                throw new RuntimeException("Invalid comparison operands.");
+            }
+            @SuppressWarnings({"rawtypes","unchecked"})
+            int cmp = ((Comparable) L).compareTo(R);
+            boolean res;
+            switch (op) {
+                case "<":  res = cmp < 0; break;
+                case "<=": res = cmp <= 0; break;
+                case ">":  res = cmp > 0; break;
+                default:   res = cmp >= 0; break;
+            }
+            return Environment.create(res);
+        }
+
+        if (!op.equals("+")) {
+            throw new RuntimeException("Unknown operator: " + op);
+        }
 
         if (L instanceof BigInteger && R instanceof BigInteger) {
             return Environment.create(((BigInteger) L).add((BigInteger) R));
