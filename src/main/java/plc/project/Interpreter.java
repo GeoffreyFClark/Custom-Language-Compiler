@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.math.RoundingMode;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
@@ -229,17 +230,55 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             return Environment.create(res);
         }
 
-        if (!op.equals("+")) {
-            throw new RuntimeException("Unknown operator: " + op);
+        if (op.equals("+")) {
+            if (L instanceof String || R instanceof String) {
+                return Environment.create(String.valueOf(L) + String.valueOf(R));
+            } else if (L instanceof BigInteger && R instanceof BigInteger) {
+                return Environment.create(((BigInteger) L).add((BigInteger) R));
+            } else if (L instanceof BigDecimal && R instanceof BigDecimal) {
+                return Environment.create(((BigDecimal) L).add((BigDecimal) R));
+            } else {
+                throw new RuntimeException("Invalid + operands.");
+            }
         }
 
-        if (L instanceof BigInteger && R instanceof BigInteger) {
-            return Environment.create(((BigInteger) L).add((BigInteger) R));
-        } else if (L instanceof BigDecimal && R instanceof BigDecimal) {
-            return Environment.create(((BigDecimal) L).add((BigDecimal) R));
-        } else {
-            throw new RuntimeException("Invalid + operands.");
+        if (op.equals("-")) {
+            if (L instanceof BigInteger && R instanceof BigInteger) {
+                return Environment.create(((BigInteger) L).subtract((BigInteger) R));
+            } else if (L instanceof BigDecimal && R instanceof BigDecimal) {
+                return Environment.create(((BigDecimal) L).subtract((BigDecimal) R));
+            } else {
+                throw new RuntimeException("Invalid - operands.");
+            }
         }
+
+        if (op.equals("*")) {
+            if (L instanceof BigInteger && R instanceof BigInteger) {
+                return Environment.create(((BigInteger) L).multiply((BigInteger) R));
+            } else if (L instanceof BigDecimal && R instanceof BigDecimal) {
+                return Environment.create(((BigDecimal) L).multiply((BigDecimal) R));
+            } else {
+                throw new RuntimeException("Invalid * operands.");
+            }
+        }
+
+        if (op.equals("/")) {
+            if (L instanceof BigInteger && R instanceof BigInteger) {
+                BigInteger rr = (BigInteger) R;
+                if (rr.equals(BigInteger.ZERO)) throw new RuntimeException("Division by zero.");
+                return Environment.create(((BigInteger) L).divide(rr));
+            } else if (L instanceof BigDecimal && R instanceof BigDecimal) {
+                BigDecimal rr = (BigDecimal) R;
+                if (rr.compareTo(BigDecimal.ZERO) == 0) throw new RuntimeException("Division by zero.");
+                BigDecimal ll = (BigDecimal) L;
+                int scale = Math.max(ll.scale(), rr.scale());
+                return Environment.create(ll.divide(rr, scale, RoundingMode.HALF_EVEN));
+            } else {
+                throw new RuntimeException("Invalid / operands.");
+            }
+        }
+
+        throw new RuntimeException("Unknown operator: " + op);
     }
 
     @Override
