@@ -51,7 +51,6 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        // LET CONST? name (= expr)? ;
         if (!match("LET")) {
             if (tokens.has(0)) throw new ParseException("Expected LET.", tokens.get(0).getIndex());
             else throw new ParseException("Expected LET.", eofIndex());
@@ -65,6 +64,17 @@ public final class Parser {
         String name = tokens.get(0).getLiteral();
         tokens.advance();
 
+        if (!match(":")) {
+            if (tokens.has(0)) throw new ParseException("Expected ':'.", tokens.get(0).getIndex());
+            else throw new ParseException("Expected ':'.", eofIndex());
+        }
+        if (!peek(Token.Type.IDENTIFIER)) {
+            if (tokens.has(0)) throw new ParseException("Expected type name.", tokens.get(0).getIndex());
+            else throw new ParseException("Expected type name.", eofIndex());
+        }
+        String typeName = tokens.get(0).getLiteral();
+        tokens.advance();
+
         Optional<Ast.Expression> value = Optional.empty();
         if (match("=")) {
             if (!tokens.has(0)) throw new ParseException("Expected expression.", eofIndex());
@@ -75,7 +85,7 @@ public final class Parser {
             if (tokens.has(0)) throw new ParseException("Expected ';'.", tokens.get(0).getIndex());
             else throw new ParseException("Expected ';'.", eofIndex());
         }
-        return new Ast.Field(name, constant, value);
+        return new Ast.Field(name, typeName, constant, value);
     }
 
     /**
@@ -183,7 +193,6 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        // LET name (= expr)? ;
         if (!match("LET")) {
             if (tokens.has(0)) throw new ParseException("Expected LET.", tokens.get(0).getIndex());
             else throw new ParseException("Expected LET.", eofIndex());
@@ -195,6 +204,16 @@ public final class Parser {
         String name = tokens.get(0).getLiteral();
         tokens.advance();
 
+        Optional<String> typeName = Optional.empty();
+        if (match(":")) {
+            if (!peek(Token.Type.IDENTIFIER)) {
+                if (tokens.has(0)) throw new ParseException("Expected type name.", tokens.get(0).getIndex());
+                else throw new ParseException("Expected type name.", eofIndex());
+            }
+            typeName = Optional.of(tokens.get(0).getLiteral());
+            tokens.advance();
+        }
+
         Optional<Ast.Expression> value = Optional.empty();
         if (match("=")) {
             if (!tokens.has(0)) throw new ParseException("Expected expression.", eofIndex());
@@ -205,7 +224,7 @@ public final class Parser {
             if (tokens.has(0)) throw new ParseException("Expected ';'.", tokens.get(0).getIndex());
             else throw new ParseException("Expected ';'.", eofIndex());
         }
-        return new Ast.Statement.Declaration(name, value);
+        return new Ast.Statement.Declaration(name, typeName, value);
     }
 
     /**
