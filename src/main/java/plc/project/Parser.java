@@ -93,7 +93,6 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        // DEF name ( params ) DO stmts END
         if (!match("DEF")) {
             if (tokens.has(0)) throw new ParseException("Expected DEF.", tokens.get(0).getIndex());
             else throw new ParseException("Expected DEF.", eofIndex());
@@ -111,26 +110,62 @@ public final class Parser {
         }
 
         List<String> params = new ArrayList<>();
+        List<String> paramTypes = new ArrayList<>();
         if (!peek(")")) {
             if (!peek(Token.Type.IDENTIFIER)) {
                 if (tokens.has(0)) throw new ParseException("Expected identifier.", tokens.get(0).getIndex());
                 else throw new ParseException("Expected identifier.", eofIndex());
             }
-            params.add(tokens.get(0).getLiteral());
+            String p = tokens.get(0).getLiteral();
             tokens.advance();
+            if (!match(":")) {
+                if (tokens.has(0)) throw new ParseException("Expected ':'.", tokens.get(0).getIndex());
+                else throw new ParseException("Expected ':'.", eofIndex());
+            }
+            if (!peek(Token.Type.IDENTIFIER)) {
+                if (tokens.has(0)) throw new ParseException("Expected type name.", tokens.get(0).getIndex());
+                else throw new ParseException("Expected type name.", eofIndex());
+            }
+            String pt = tokens.get(0).getLiteral();
+            tokens.advance();
+            params.add(p);
+            paramTypes.add(pt);
+
             while (match(",")) {
                 if (!peek(Token.Type.IDENTIFIER)) {
                     if (tokens.has(0)) throw new ParseException("Expected identifier.", tokens.get(0).getIndex());
                     else throw new ParseException("Expected identifier.", eofIndex());
                 }
-                params.add(tokens.get(0).getLiteral());
+                String p2 = tokens.get(0).getLiteral();
                 tokens.advance();
+                if (!match(":")) {
+                    if (tokens.has(0)) throw new ParseException("Expected ':'.", tokens.get(0).getIndex());
+                    else throw new ParseException("Expected ':'.", eofIndex());
+                }
+                if (!peek(Token.Type.IDENTIFIER)) {
+                    if (tokens.has(0)) throw new ParseException("Expected type name.", tokens.get(0).getIndex());
+                    else throw new ParseException("Expected type name.", eofIndex());
+                }
+                String pt2 = tokens.get(0).getLiteral();
+                tokens.advance();
+                params.add(p2);
+                paramTypes.add(pt2);
             }
         }
 
         if (!match(")")) {
             if (tokens.has(0)) throw new ParseException("Expected ')'.", tokens.get(0).getIndex());
             else throw new ParseException("Expected ')'.", eofIndex());
+        }
+
+        Optional<String> returnType = Optional.empty();
+        if (match(":")) {
+            if (!peek(Token.Type.IDENTIFIER)) {
+                if (tokens.has(0)) throw new ParseException("Expected return type.", tokens.get(0).getIndex());
+                else throw new ParseException("Expected return type.", eofIndex());
+            }
+            returnType = Optional.of(tokens.get(0).getLiteral());
+            tokens.advance();
         }
 
         if (!match("DO")) {
@@ -143,9 +178,9 @@ public final class Parser {
             if (!tokens.has(0)) throw new ParseException("Expected END.", eofIndex());
             statements.add(parseStatement());
         }
-        tokens.advance(); // END
+        tokens.advance();
 
-        return new Ast.Method(name, params, statements);
+        return new Ast.Method(name, params, paramTypes, returnType, statements);
     }
 
     /**
