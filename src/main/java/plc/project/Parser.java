@@ -441,8 +441,11 @@ public final class Parser {
         Ast.Expression expr = parseEqualityExpression();
         while (true) {
             String op = null;
-            if (peek("AND")) { op = "AND"; }
-            else if (peek("OR")) { op = "OR"; }
+            if (peek("AND") || peek("&&")) {
+                op = peek("AND") ? "AND" : "&&";
+            } else if (peek("OR") || peek("||")) {
+                op = peek("OR") ? "OR" : "||";
+            }
             if (op == null) break;
             tokens.advance(); // consume operator
 
