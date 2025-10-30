@@ -108,7 +108,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Return ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getValue());
+        Environment.Type target = method == null ? Environment.Type.NIL : method.getFunction().getReturnType();
+        requireAssignable(target, ast.getValue().getType());
+        return null;
     }
 
     @Override
