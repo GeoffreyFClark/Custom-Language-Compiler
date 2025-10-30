@@ -1,6 +1,7 @@
 package plc.project;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * See the specification for information about what the different visit
@@ -46,7 +47,33 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException();  // TODO
+        List<Environment.Type> pts = new java.util.ArrayList<>();
+        for (String tn : ast.getParameterTypeNames()) {
+            pts.add(Environment.getType(tn));
+        }
+        Environment.Type rt = ast.getReturnTypeName().isPresent()
+                ? Environment.getType(ast.getReturnTypeName().get())
+                : Environment.Type.NIL;
+
+        Environment.Function fn = scope.defineFunction(ast.getName(), ast.getName(), pts, rt, args -> Environment.NIL);
+        ast.setFunction(fn);
+
+        Scope old = scope;
+        scope = new Scope(old);
+        for (int i = 0; i < ast.getParameters().size(); i++) {
+            String p = ast.getParameters().get(i);
+            Environment.Type t = pts.get(i);
+            scope.defineVariable(p, p, t, false, Environment.NIL);
+        }
+
+        Ast.Method prev = method;
+        method = ast;
+        for (Ast.Statement s : ast.getStatements()) {
+            visit(s);
+        }
+        method = prev;
+        scope = old;
+        return null;
     }
 
     @Override
