@@ -42,7 +42,16 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        throw new UnsupportedOperationException();  // TODO
+        Environment.Type t = Environment.getType(ast.getTypeName());
+        if (ast.getValue().isPresent()) {
+            visit(ast.getValue().get());
+            requireAssignable(t, ast.getValue().get().getType());
+        } else if (ast.getConstant()) {
+            throw new RuntimeException("const field needs init");
+        }
+        Environment.Variable v = scope.defineVariable(ast.getName(), ast.getName(), t, ast.getConstant(), Environment.NIL);
+        ast.setVariable(v);
+        return null;
     }
 
     @Override
