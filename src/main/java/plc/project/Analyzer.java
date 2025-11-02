@@ -115,7 +115,17 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (!(ast.getReceiver() instanceof Ast.Expression.Access)) {
+            throw new RuntimeException("receiver not access");
+        }
+        visit(ast.getReceiver());
+        visit(ast.getValue());
+        Environment.Variable v = ((Ast.Expression.Access) ast.getReceiver()).getVariable();
+        if (v.getConstant()) {
+            throw new RuntimeException("assigning constant");
+        }
+        requireAssignable(v.getType(), ast.getValue().getType());
+        return null;
     }
 
     @Override
