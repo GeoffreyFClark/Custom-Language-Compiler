@@ -130,7 +130,30 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.If ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN) {
+            throw new RuntimeException("if cond not boolean");
+        }
+        if (ast.getThenStatements().isEmpty()) {
+            throw new RuntimeException("empty then");
+        }
+
+        Scope old = scope;
+        scope = new Scope(old);
+        for (Ast.Statement s : ast.getThenStatements()) {
+            visit(s);
+        }
+        scope = old;
+
+        if (!ast.getElseStatements().isEmpty()) {
+            Scope old2 = scope;
+            scope = new Scope(old2);
+            for (Ast.Statement s : ast.getElseStatements()) {
+                visit(s);
+            }
+            scope = old2;
+        }
+        return null;
     }
 
     @Override
@@ -140,7 +163,17 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN) {
+            throw new RuntimeException("while cond not boolean");
+        }
+        Scope old = scope;
+        scope = new Scope(old);
+        for (Ast.Statement s : ast.getStatements()) {
+            visit(s);
+        }
+        scope = old;
+        return null;
     }
 
     @Override
