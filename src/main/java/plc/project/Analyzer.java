@@ -92,7 +92,25 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Declaration ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getValue().isPresent()) {
+            visit(ast.getValue().get());
+        }
+
+        Environment.Type t;
+        if (ast.getTypeName().isPresent()) {
+            t = Environment.getType(ast.getTypeName().get());
+            if (ast.getValue().isPresent()) {
+                requireAssignable(t, ast.getValue().get().getType());
+            }
+        } else if (ast.getValue().isPresent()) {
+            t = ast.getValue().get().getType();
+        } else {
+            throw new RuntimeException("missing type");
+        }
+
+        Environment.Variable v = scope.defineVariable(ast.getName(), ast.getName(), t, false, Environment.NIL);
+        ast.setVariable(v);
+        return null;
     }
 
     @Override
