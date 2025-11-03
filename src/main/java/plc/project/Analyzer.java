@@ -158,7 +158,50 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.For ast) {
-        throw new UnsupportedOperationException();  // TODO
+        Scope old = scope;
+        scope = new Scope(old);
+
+        Environment.Type loopType = null;
+        if (ast.getInitialization() != null) {
+            visit(ast.getInitialization());
+            if (ast.getInitialization() instanceof Ast.Statement.Assignment) {
+                Ast.Statement.Assignment a = (Ast.Statement.Assignment) ast.getInitialization();
+                if (a.getReceiver() instanceof Ast.Expression.Access) {
+                    loopType = ((Ast.Expression.Access) a.getReceiver()).getVariable().getType();
+                }
+            }
+        }
+
+        visit(ast.getCondition());
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN) {
+            scope = old;
+            throw new RuntimeException("for cond not boolean");
+        }
+
+        if (ast.getIncrement() != null) {
+            visit(ast.getIncrement());
+            if (loopType != null && ast.getIncrement() instanceof Ast.Statement.Assignment) {
+                Ast.Statement.Assignment a2 = (Ast.Statement.Assignment) ast.getIncrement();
+                if (a2.getReceiver() instanceof Ast.Expression.Access) {
+                    Environment.Type t2 = ((Ast.Expression.Access) a2.getReceiver()).getVariable().getType();
+                    if (t2 != loopType) {
+                        scope = old;
+                        throw new RuntimeException("for incr type mismatch");
+                    }
+                }
+            }
+        }
+
+        if (ast.getStatements().isEmpty()) {
+            scope = old;
+            throw new RuntimeException("for body empty");
+        }
+        for (Ast.Statement s : ast.getStatements()) {
+            visit(s);
+        }
+
+        scope = old;
+        return null;
     }
 
     @Override
