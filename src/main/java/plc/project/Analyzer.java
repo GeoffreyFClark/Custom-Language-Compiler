@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
@@ -229,7 +231,43 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException();  // TODO
+        Object lit = ((Ast.Expression.Literal) ast).getLiteral();
+        if (lit == null) {
+            ast.setType(Environment.Type.NIL);
+            return null;
+        }
+        if (lit instanceof Boolean) {
+            ast.setType(Environment.Type.BOOLEAN);
+            return null;
+        }
+        if (lit instanceof Character) {
+            ast.setType(Environment.Type.CHARACTER);
+            return null;
+        }
+        if (lit instanceof String) {
+            ast.setType(Environment.Type.STRING);
+            return null;
+        }
+        if (lit instanceof BigInteger) {
+            BigInteger bi = (BigInteger) lit;
+            try {
+                bi.intValueExact();
+            } catch (ArithmeticException e) {
+                throw new RuntimeException("int out of range");
+            }
+            ast.setType(Environment.Type.INTEGER);
+            return null;
+        }
+        if (lit instanceof BigDecimal) {
+            BigDecimal bd = (BigDecimal) lit;
+            double d = bd.doubleValue();
+            if (Double.isInfinite(d) || Double.isNaN(d)) {
+                throw new RuntimeException("decimal out of range");
+            }
+            ast.setType(Environment.Type.DECIMAL);
+            return null;
+        }
+        return null;
     }
 
     @Override
