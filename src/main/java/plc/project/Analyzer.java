@@ -282,7 +282,62 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
-        throw new UnsupportedOperationException();  // TODO
+        String op = ast.getOperator();
+        visit(ast.getLeft());
+        visit(ast.getRight());
+        Environment.Type lt = ast.getLeft().getType();
+        Environment.Type rt = ast.getRight().getType();
+
+        if (op.equals("AND") || op.equals("&&") || op.equals("OR") || op.equals("||")) {
+            if (lt != Environment.Type.BOOLEAN || rt != Environment.Type.BOOLEAN) {
+                throw new RuntimeException("logic types");
+            }
+            ast.setType(Environment.Type.BOOLEAN);
+            return null;
+        }
+
+        if (op.equals("<") || op.equals("<=") || op.equals(">") || op.equals(">=") || op.equals("==") || op.equals("!=")) {
+            boolean lc = lt == Environment.Type.INTEGER || lt == Environment.Type.DECIMAL || lt == Environment.Type.CHARACTER || lt == Environment.Type.STRING;
+            if (!lc || lt != rt) {
+                throw new RuntimeException("compare types");
+            }
+            ast.setType(Environment.Type.BOOLEAN);
+            return null;
+        }
+
+        if (op.equals("+")) {
+            if (lt == Environment.Type.STRING || rt == Environment.Type.STRING) {
+                ast.setType(Environment.Type.STRING);
+                return null;
+            }
+            if (lt == Environment.Type.INTEGER) {
+                if (rt != Environment.Type.INTEGER) throw new RuntimeException("add types");
+                ast.setType(Environment.Type.INTEGER);
+                return null;
+            } else if (lt == Environment.Type.DECIMAL) {
+                if (rt != Environment.Type.DECIMAL) throw new RuntimeException("add types");
+                ast.setType(Environment.Type.DECIMAL);
+                return null;
+            } else {
+                throw new RuntimeException("add types");
+            }
+        }
+
+        if (op.equals("-") || op.equals("*") || op.equals("/")) {
+            if (lt == Environment.Type.INTEGER) {
+                if (rt != Environment.Type.INTEGER) throw new RuntimeException("arith types");
+                ast.setType(Environment.Type.INTEGER);
+                return null;
+            } else if (lt == Environment.Type.DECIMAL) {
+                if (rt != Environment.Type.DECIMAL) throw new RuntimeException("arith types");
+                ast.setType(Environment.Type.DECIMAL);
+                return null;
+            } else {
+                throw new RuntimeException("arith types");
+            }
+        }
+
+        throw new RuntimeException("unknown op");
     }
 
     @Override
