@@ -342,7 +342,16 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getReceiver().isPresent()) {
+            Ast.Expression r = ast.getReceiver().get();
+            visit(r);
+            Environment.Variable v = r.getType().getField(ast.getName());
+            ast.setVariable(v);
+        } else {
+            Environment.Variable v = scope.lookupVariable(ast.getName());
+            ast.setVariable(v);
+        }
+        return null;
     }
 
     @Override
