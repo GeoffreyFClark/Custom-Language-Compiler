@@ -356,7 +356,25 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+        Environment.Function f;
+        int offset = 0;
+        if (ast.getReceiver().isPresent()) {
+            Ast.Expression r = ast.getReceiver().get();
+            visit(r);
+            f = r.getType().getFunction(ast.getName(), ast.getArguments().size());
+            offset = 1;
+        } else {
+            f = scope.lookupFunction(ast.getName(), ast.getArguments().size());
+        }
+        ast.setFunction(f);
+
+        List<Environment.Type> pts = f.getParameterTypes();
+        for (int i = 0; i < ast.getArguments().size(); i++) {
+            Ast.Expression arg = ast.getArguments().get(i);
+            visit(arg);
+            requireAssignable(pts.get(i + offset), arg.getType());
+        }
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
