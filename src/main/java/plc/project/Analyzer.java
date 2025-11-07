@@ -378,7 +378,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        throw new UnsupportedOperationException();  // TODO
+        if (target == type) return;
+        if (target == Environment.Type.ANY) return;
+        if (target == Environment.Type.COMPARABLE) {
+            if (type == Environment.Type.INTEGER || type == Environment.Type.DECIMAL ||
+                    type == Environment.Type.CHARACTER || type == Environment.Type.STRING) return;
+        }
+        throw new RuntimeException("Not assignable");
     }
 
 }
