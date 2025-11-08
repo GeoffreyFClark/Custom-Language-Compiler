@@ -413,6 +413,193 @@ public final class AnalyzerTests {
         );
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testGroupExtra(String test, Ast.Expression.Group ast, Ast.Expression.Group expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testGroupExtra() {
+        return Stream.of(
+                Arguments.of("Grouped Literal Invalid",
+                        new Ast.Expression.Group(new Ast.Expression.Literal(BigInteger.ONE)),
+                        null
+                ),
+                Arguments.of("Grouped Binary Valid",
+                        new Ast.Expression.Group(
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Literal(BigInteger.ONE),
+                                        new Ast.Expression.Literal(BigInteger.TEN)
+                                )
+                        ),
+                        init(new Ast.Expression.Group(
+                                init(new Ast.Expression.Binary("+",
+                                        init(new Ast.Expression.Literal(BigInteger.ONE), a -> a.setType(Environment.Type.INTEGER)),
+                                        init(new Ast.Expression.Literal(BigInteger.TEN), a -> a.setType(Environment.Type.INTEGER))
+                                ), b -> b.setType(Environment.Type.INTEGER))
+                        ), g -> g.setType(Environment.Type.INTEGER))
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testFieldExtras(String test, Ast.Field ast, Ast.Field expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testFieldExtras() {
+        return Stream.of(
+                Arguments.of("Const Without Init",
+                        new Ast.Field("x", "Integer", true, Optional.empty()),
+                        null
+                ),
+                Arguments.of("Field Init Type Mismatch",
+                        new Ast.Field("x", "Integer", false, Optional.of(new Ast.Expression.Literal(BigDecimal.ONE))),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testDeclarationExtras(String test, Ast.Statement.Declaration ast, Ast.Statement.Declaration expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testDeclarationExtras() {
+        return Stream.of(
+                Arguments.of("Init Type Mismatch",
+                        new Ast.Statement.Declaration("n", Optional.of("Integer"), Optional.of(new Ast.Expression.Literal(BigDecimal.ONE))),
+                        null
+                ),
+                Arguments.of("Infer Decimal",
+                        new Ast.Statement.Declaration("d", Optional.empty(), Optional.of(new Ast.Expression.Literal(new BigDecimal("2.5")))),
+                        init(new Ast.Statement.Declaration("d", Optional.empty(), Optional.of(
+                                init(new Ast.Expression.Literal(new BigDecimal("2.5")), e -> e.setType(Environment.Type.DECIMAL))
+                        )), a -> a.setVariable(new Environment.Variable("d", "d", Environment.Type.DECIMAL, false, Environment.NIL)))
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testAssignmentExtras(String test, Ast.Statement.Assignment ast, Ast.Statement.Assignment expected) {
+        test(ast, expected, init(new Scope(null), s -> {
+            s.defineVariable("c", "c", Environment.Type.INTEGER, true, Environment.NIL);
+        }));
+    }
+    private static Stream<Arguments> testAssignmentExtras() {
+        return Stream.of(
+                Arguments.of("Assign Const",
+                        new Ast.Statement.Assignment(
+                                new Ast.Expression.Access(Optional.empty(), "c"),
+                                new Ast.Expression.Literal(BigInteger.ONE)
+                        ),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testComparisonExtras(String test, Ast.Expression.Binary ast, Ast.Expression.Binary expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testComparisonExtras() {
+        return Stream.of(
+                Arguments.of("Int Less Than",
+                        new Ast.Expression.Binary("<",
+                                new Ast.Expression.Literal(BigInteger.ONE),
+                                new Ast.Expression.Literal(BigInteger.TEN)
+                        ),
+                        init(new Ast.Expression.Binary("<",
+                                init(new Ast.Expression.Literal(BigInteger.ONE), a -> a.setType(Environment.Type.INTEGER)),
+                                init(new Ast.Expression.Literal(BigInteger.TEN), a -> a.setType(Environment.Type.INTEGER))
+                        ), b -> b.setType(Environment.Type.BOOLEAN))
+                ),
+                Arguments.of("Mismatch Compare",
+                        new Ast.Expression.Binary("<",
+                                new Ast.Expression.Literal(BigInteger.ONE),
+                                new Ast.Expression.Literal(BigDecimal.ONE)
+                        ),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testStringAccess(String test, Ast.Expression.Access ast, Ast.Expression.Access expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testStringAccess() {
+        return Stream.of(
+                Arguments.of("String length",
+                        new Ast.Expression.Access(Optional.of(new Ast.Expression.Literal("hi")), "length"),
+                        init(new Ast.Expression.Access(Optional.of(
+                                init(new Ast.Expression.Literal("hi"), e -> e.setType(Environment.Type.STRING))
+                        ), "length"), a -> a.setVariable(new Environment.Variable("length", "length()", Environment.Type.INTEGER, false, Environment.NIL)))
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testStringMethods(String test, Ast.Expression.Function ast, Ast.Expression.Function expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testStringMethods() {
+        return Stream.of(
+                Arguments.of("slice ok",
+                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Literal("abc")), "slice",
+                                Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE), new Ast.Expression.Literal(BigInteger.TWO))),
+                        init(new Ast.Expression.Function(Optional.of(
+                                init(new Ast.Expression.Literal("abc"), e -> e.setType(Environment.Type.STRING))
+                        ), "slice", Arrays.asList(
+                                init(new Ast.Expression.Literal(BigInteger.ONE), e -> e.setType(Environment.Type.INTEGER)),
+                                init(new Ast.Expression.Literal(BigInteger.TWO), e -> e.setType(Environment.Type.INTEGER))
+                        )), f -> f.setFunction(new Environment.Function("slice", "substring",
+                                Arrays.asList(Environment.Type.ANY, Environment.Type.INTEGER, Environment.Type.INTEGER),
+                                Environment.Type.STRING, args -> Environment.NIL)))
+                ),
+                Arguments.of("slice bad arg",
+                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Literal("abc")), "slice",
+                                Arrays.asList(new Ast.Expression.Literal(BigDecimal.ONE), new Ast.Expression.Literal(BigInteger.TWO))),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testMethodArity(String test, Ast.Expression.Function ast, Ast.Expression.Function expected) {
+        test(ast, expected, init(new Scope(null), s -> {
+            s.defineVariable("object", "object", OBJECT_TYPE, false, Environment.NIL);
+        }));
+    }
+    private static Stream<Arguments> testMethodArity() {
+        return Stream.of(
+                Arguments.of("Method Extra Arg",
+                        new Ast.Expression.Function(Optional.of(
+                                new Ast.Expression.Access(Optional.empty(), "object")
+                        ), "method", Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE))),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testDecimalOverflow(String test, Ast.Expression.Literal ast, Ast.Expression.Literal expected) {
+        test(ast, expected, new Scope(null));
+    }
+    private static Stream<Arguments> testDecimalOverflow() {
+        return Stream.of(
+                Arguments.of("Decimal Invalid",
+                        new Ast.Expression.Literal(new BigDecimal("1e309")),
+                        null
+                )
+        );
+    }
+
     /**
      * Helper function for tests. If {@param expected} is {@code null}, analysis
      * is expected to throw a {@link RuntimeException}.
