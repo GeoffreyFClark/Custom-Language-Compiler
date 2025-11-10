@@ -90,6 +90,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.Expression ast) {
         visit(ast.getExpression());
+        if (!(ast.getExpression() instanceof Ast.Expression.Function)) {
+            throw new RuntimeException("expression statement must be a function call");
+        }
+        Environment.Function f = ((Ast.Expression.Function) ast.getExpression()).getFunction();
+        if (f.getReturnType() != Environment.Type.NIL) {
+            throw new RuntimeException("expression statement must be NIL-returning");
+        }
         return null;
     }
 
@@ -297,9 +304,22 @@ public final class Analyzer implements Ast.Visitor<Void> {
             return null;
         }
 
-        if (op.equals("<") || op.equals("<=") || op.equals(">") || op.equals(">=") || op.equals("==") || op.equals("!=")) {
-            boolean lc = lt == Environment.Type.INTEGER || lt == Environment.Type.DECIMAL || lt == Environment.Type.CHARACTER || lt == Environment.Type.STRING;
-            if (!lc || lt != rt) {
+        if (op.equals("<") || op.equals("<=") || op.equals(">") || op.equals(">=")) {
+            boolean leftOk =
+                    lt == Environment.Type.INTEGER ||
+                            lt == Environment.Type.DECIMAL ||
+                            lt == Environment.Type.CHARACTER ||
+                            lt == Environment.Type.STRING ||
+                            lt == Environment.Type.COMPARABLE;
+            if (!leftOk || lt != rt) {
+                throw new RuntimeException("compare types");
+            }
+            ast.setType(Environment.Type.BOOLEAN);
+            return null;
+        }
+
+        if (op.equals("==") || op.equals("!=")) {
+            if (lt != rt) {
                 throw new RuntimeException("compare types");
             }
             ast.setType(Environment.Type.BOOLEAN);
