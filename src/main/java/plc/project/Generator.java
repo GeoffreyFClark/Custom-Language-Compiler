@@ -1,6 +1,7 @@
 package plc.project;
 
 import java.io.PrintWriter;
+import java.util.List;
 
 public final class Generator implements Ast.Visitor<Void> {
 
@@ -81,7 +82,36 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.Function f = ast.getFunction();
+        print(f.getReturnType().getJvmName());
+        print(" ");
+        print(f.getJvmName());
+        print("(");
+        if (!ast.getParameters().isEmpty()) {
+            List<String> params = ast.getParameters();
+            List<Environment.Type> types = f.getParameterTypes();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < params.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(types.get(i).getJvmName()).append(" ").append(params.get(i));
+            }
+            print(sb.toString());
+        }
+        print(")");
+        if (ast.getStatements().isEmpty()) {
+            print(" {}");
+        } else {
+            print(" {");
+            indent++;
+            for (Ast.Statement s : ast.getStatements()) {
+                newline(indent);
+                visit(s);
+            }
+            indent--;
+            newline(indent);
+            print("}");
+        }
+        return null;
     }
 
     @Override
