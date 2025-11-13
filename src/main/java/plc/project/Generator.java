@@ -29,6 +29,27 @@ public final class Generator implements Ast.Visitor<Void> {
         }
     }
 
+    private void printForHeaderPart(Ast.Statement s) {
+        if (s instanceof Ast.Statement.Assignment) {
+            Ast.Statement.Assignment a = (Ast.Statement.Assignment) s;
+            visit(a.getReceiver());
+            print(" = ");
+            visit(a.getValue());
+        } else if (s instanceof Ast.Statement.Declaration) {
+            Ast.Statement.Declaration d = (Ast.Statement.Declaration) s;
+            Environment.Variable v = d.getVariable();
+            print(v.getType().getJvmName());
+            print(" ");
+            print(v.getJvmName());
+            if (d.getValue().isPresent()) {
+                print(" = ");
+                visit(d.getValue().get());
+            }
+        } else {
+            visit(s);
+        }
+    }
+
     @Override
     public Void visit(Ast.Source ast) {
         print("public class Main {");
@@ -181,13 +202,13 @@ public final class Generator implements Ast.Visitor<Void> {
     public Void visit(Ast.Statement.For ast) {
         print("for ( ");
         if (ast.getInitialization() != null) {
-            visit(ast.getInitialization());
+            printForHeaderPart(ast.getInitialization());
         }
         print("; ");
         visit(ast.getCondition());
         print("; ");
         if (ast.getIncrement() != null) {
-            visit(ast.getIncrement());
+            printForHeaderPart(ast.getIncrement());
         }
         print(" )");
         if (ast.getStatements().isEmpty()) {
