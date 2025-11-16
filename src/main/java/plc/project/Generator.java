@@ -2,6 +2,8 @@ package plc.project;
 
 import java.io.PrintWriter;
 import java.util.List;
+import java.math.BigInteger;
+import java.math.BigDecimal;
 
 public final class Generator implements Ast.Visitor<Void> {
 
@@ -258,7 +260,25 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Object lit = ((Ast.Expression.Literal) ast).getLiteral();
+        if (lit == null) {
+            print("null");
+        } else if (lit instanceof Boolean) {
+            print(((Boolean) lit) ? "true" : "false");
+        } else if (lit instanceof BigInteger) {
+            print(((BigInteger) lit).toString());
+        } else if (lit instanceof BigDecimal) {
+            print(((BigDecimal) lit).toString());
+        } else if (lit instanceof Character) {
+            char c = (Character) lit;
+            print("'", String.valueOf(c), "'");
+        } else if (lit instanceof String) {
+            String s = (String) lit;
+            print("\"", s, "\"");
+        } else {
+            print(lit.toString());
+        }
+        return null;
     }
 
     @Override
