@@ -82,6 +82,7 @@ public final class Generator implements Ast.Visitor<Void> {
             newline(0);
         }
 
+        newline(0);
         indent = old;
         print("}");
         return null;
@@ -211,8 +212,10 @@ public final class Generator implements Ast.Visitor<Void> {
         print("; ");
         if (ast.getIncrement() != null) {
             printForHeaderPart(ast.getIncrement());
+            print(" )");
+        } else {
+            print(")");
         }
-        print(" )");
         if (ast.getStatements().isEmpty()) {
             print(" {}");
         } else {
