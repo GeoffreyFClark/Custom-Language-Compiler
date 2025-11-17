@@ -301,11 +301,29 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver().isPresent()) {
+            visit(ast.getReceiver().get());
+            print(".");
+        }
+        print(ast.getVariable().getJvmName());
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver().isPresent()) {
+            visit(ast.getReceiver().get());
+            print(".");
+            print(ast.getFunction().getJvmName());
+        } else {
+            print(ast.getFunction().getJvmName());
+        }
+        print("(");
+        for (int i = 0; i < ast.getArguments().size(); i++) {
+            if (i > 0) print(", ");
+            visit(ast.getArguments().get(i));
+        }
+        print(")");
+        return null;
     }
 }
