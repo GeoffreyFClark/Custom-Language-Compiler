@@ -170,10 +170,17 @@ public final class Lexer {
             match("[<>!=]", "=");
             return chars.emit(Token.Type.OPERATOR);
         }
+        if (peek("&", "&")) {
+            match("&", "&");
+            return chars.emit(Token.Type.OPERATOR);
+        }
+        if (peek("\\|", "\\|")) {
+            match("\\|", "\\|");
+            return chars.emit(Token.Type.OPERATOR);
+        }
         if (!chars.has(0)) {
             throw new ParseException("Expected operator.", chars.index);
         }
-        //if (peek("[ \\t\\r\\n]")) {  // peek \\b throws exception
         if (isWhitespaceChar(chars.get(0))) {
             throw new ParseException("Expected operator.", chars.index);
         }

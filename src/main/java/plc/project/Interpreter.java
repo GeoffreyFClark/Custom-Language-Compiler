@@ -98,11 +98,19 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
         if (acc.getReceiver().isPresent()) {
             Environment.PlcObject obj = visit(acc.getReceiver().get());
-            obj.setField(acc.getName(), v);
+            Environment.Variable var = obj.getField(acc.getName());
+            if (var.getConstant()) {
+                throw new RuntimeException("Cannot assign to constant field.");
+            }
+            var.setValue(v);
         } else {
             Environment.Variable var = scope.lookupVariable(acc.getName());
+            if (var.getConstant()) {
+                throw new RuntimeException("Cannot assign to constant variable.");
+            }
             var.setValue(v);
         }
+
         return Environment.NIL;
     }
 
@@ -188,16 +196,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
         String op = ast.getOperator();
 
-        if (op.equals("AND")) {
+        if (op.equals("AND") || op.equals("&&")) {
             Boolean left = requireType(Boolean.class, visit(ast.getLeft()));
-            if (!left) return Environment.create(false);
+            if (!left) {
+                return Environment.create(false);
+            }
             Boolean right = requireType(Boolean.class, visit(ast.getRight()));
             return Environment.create(left && right);
         }
 
-        if (op.equals("OR")) {
+        if (op.equals("OR") || op.equals("||")) {
             Boolean left = requireType(Boolean.class, visit(ast.getLeft()));
-            if (left) return Environment.create(true);
+            if (left) {
+                return Environment.create(true);
+            }
             Boolean right = requireType(Boolean.class, visit(ast.getRight()));
             return Environment.create(left || right);
         }
